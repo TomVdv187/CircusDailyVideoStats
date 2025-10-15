@@ -162,7 +162,7 @@ const Dashboard = () => {
       circusFunnel,
       circusDropoff,
       sudinfoDropoff,
-      topCircus: _.take(_.orderBy(groupedCircusData, row => Number(row.Streams) || 0, 'desc'), 15),
+      topCircus: _.take(_.orderBy(groupedCircusData, row => Number(row.Streams) || 0, 'desc'), 10),
       topSudinfoSport: _.take(_.orderBy(groupedSudinfoSportVideos, row => Number(row.Streams) || 0, 'desc'), 10)
     });
   };
@@ -225,7 +225,7 @@ const Dashboard = () => {
         </div>
 
         <div className="flex gap-3 mb-8">
-          {['overview', 'completion', 'evolution', 'improvements'].map(tab => (
+          {['overview', 'completion', 'evolution', 'improvements', 'benchmarks'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -291,24 +291,53 @@ const Dashboard = () => {
                 <h2 className="text-2xl font-bold text-white mb-4">Metrics Comparison</h2>
                 <div className="space-y-4">
                   {[
-                    { label: 'Streams/Video', c: Math.round(data.circusStats.avgStreamsPerVideo), s: Math.round(data.sudinfoSportStats.avgStreamsPerVideo) },
-                    { label: '100% Completion', c: data.circusStats.comp100.toFixed(1) + '%', s: data.sudinfoSportStats.comp100.toFixed(1) + '%' },
-                    { label: 'View Time', c: data.circusStats.avgViewTime.toFixed(2) + 'm', s: data.sudinfoSportStats.avgViewTime.toFixed(2) + 'm' }
-                  ].map((item, idx) => (
-                    <div key={idx} className="bg-white bg-opacity-5 rounded-xl p-4">
-                      <div className="text-white text-sm mb-2 opacity-75">{item.label}</div>
-                      <div className="flex justify-between">
-                        <div>
-                          <div className="text-blue-400 text-xs">Circus</div>
-                          <div className="text-white text-2xl font-bold">{item.c}</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-red-400 text-xs">Sudinfo</div>
-                          <div className="text-white text-2xl font-bold">{item.s}</div>
+                    { 
+                      label: 'Streams/Video', 
+                      c: Math.round(data.circusStats.avgStreamsPerVideo || 0), 
+                      s: Math.round(data.sudinfoSportStats.avgStreamsPerVideo || 0),
+                      cRaw: data.circusStats.avgStreamsPerVideo || 0,
+                      sRaw: data.sudinfoSportStats.avgStreamsPerVideo || 0
+                    },
+                    { 
+                      label: '100% Completion', 
+                      c: (data.circusStats.comp100 || 0).toFixed(1) + '%', 
+                      s: (data.sudinfoSportStats.comp100 || 0).toFixed(1) + '%',
+                      cRaw: data.circusStats.comp100 || 0,
+                      sRaw: data.sudinfoSportStats.comp100 || 0
+                    },
+                    { 
+                      label: 'View Time', 
+                      c: (data.circusStats.avgViewTime || 0).toFixed(1) + 'm', 
+                      s: (data.sudinfoSportStats.avgViewTime || 0).toFixed(1) + 'm',
+                      cRaw: data.circusStats.avgViewTime || 0,
+                      sRaw: data.sudinfoSportStats.avgViewTime || 0
+                    }
+                  ].map((item, idx) => {
+                    const isCircusBetter = item.cRaw > item.sRaw;
+                    const diff = item.sRaw > 0 ? ((item.cRaw - item.sRaw) / item.sRaw * 100) : 0;
+                    const absDiff = Math.abs(diff);
+                    
+                    return (
+                      <div key={idx} className="bg-white bg-opacity-5 rounded-xl p-4">
+                        <div className="text-white text-sm mb-2 opacity-75">{item.label}</div>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <div className="text-blue-400 text-xs">Circus</div>
+                            <div className="text-white text-2xl font-bold">{item.c}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className={`text-xs ${isCircusBetter ? 'text-green-400' : 'text-red-400'}`}>
+                              {isCircusBetter ? '↑' : '↓'} {absDiff.toFixed(0)}%
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-red-400 text-xs">Sudinfo</div>
+                            <div className="text-white text-2xl font-bold">{item.s}</div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -338,7 +367,7 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="rounded-2xl bg-gradient-to-br from-blue-900 to-blue-800 p-6 shadow-2xl">
-                <h2 className="text-2xl font-bold text-white mb-4">Top 15 Circus Daily</h2>
+                <h2 className="text-2xl font-bold text-white mb-4">Top 10 Circus Daily</h2>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {data.topCircus.map((v, i) => (
                     <div key={i} className="bg-white bg-opacity-10 rounded-lg p-3 flex gap-3">
@@ -470,6 +499,133 @@ const Dashboard = () => {
                   <li>Use consistent hosts</li>
                   <li>Build episode continuity</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'benchmarks' && (
+          <div className="space-y-6">
+            <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 p-8 shadow-2xl">
+              <h2 className="text-4xl font-bold text-white mb-6">Belgian & European Video Benchmarks 2024</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                  <h3 className="text-2xl font-bold text-white mb-4">European Completion Rates</h3>
+                  <div className="space-y-3 text-white">
+                    <div className="flex justify-between">
+                      <span>Premium Content (Netflix):</span>
+                      <span className="font-bold">72%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Video Advertising:</span>
+                      <span className="font-bold">75%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>General Industry Standard:</span>
+                      <span className="font-bold">60-80%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                  <h3 className="text-2xl font-bold text-white mb-4">Belgian Market Context</h3>
+                  <div className="space-y-2 text-white text-sm">
+                    <div>• Video penetration: <strong>65.2%</strong> in 2024</div>
+                    <div>• Market growth: <strong>6.88%</strong> annually</div>
+                    <div>• Cost-driven audience: <strong>43%</strong> prioritize price</div>
+                    <div>• Local content preference growing</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="rounded-2xl bg-white bg-opacity-10 p-6 shadow-2xl">
+                <h3 className="text-2xl font-bold text-white mb-4">Your Performance vs Benchmarks</h3>
+                <div className="space-y-4">
+                  <div className="bg-white bg-opacity-5 rounded-lg p-4">
+                    <div className="text-white text-sm mb-2">Circus Daily Completion</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-2xl font-bold text-white">{data.circusStats.comp100.toFixed(1)}%</div>
+                      <div className={`text-sm ${data.circusStats.comp100 >= 60 ? 'text-green-400' : 'text-red-400'}`}>
+                        {data.circusStats.comp100 >= 60 ? '✓ Above minimum' : '⚠ Below benchmark'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white bg-opacity-5 rounded-lg p-4">
+                    <div className="text-white text-sm mb-2">Sudinfo Sport Completion</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-2xl font-bold text-white">{data.sudinfoSportStats.comp100.toFixed(1)}%</div>
+                      <div className={`text-sm ${data.sudinfoSportStats.comp100 >= 60 ? 'text-green-400' : 'text-red-400'}`}>
+                        {data.sudinfoSportStats.comp100 >= 60 ? '✓ Above minimum' : '⚠ Below benchmark'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white bg-opacity-10 p-6 shadow-2xl">
+                <h3 className="text-2xl font-bold text-white mb-4">Video Length Guidelines</h3>
+                <div className="space-y-3 text-white text-sm">
+                  <div className="bg-green-500 bg-opacity-20 rounded-lg p-3">
+                    <div className="font-bold">Under 1 minute</div>
+                    <div>Expected: ~66% completion</div>
+                  </div>
+                  <div className="bg-yellow-500 bg-opacity-20 rounded-lg p-3">
+                    <div className="font-bold">1-2 minutes</div>
+                    <div>Expected: ~56% completion</div>
+                  </div>
+                  <div className="bg-red-500 bg-opacity-20 rounded-lg p-3">
+                    <div className="font-bold">2-10 minutes</div>
+                    <div>Expected: ~50% completion</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-white bg-opacity-10 p-6 shadow-2xl">
+                <h3 className="text-2xl font-bold text-white mb-4">Market Opportunities</h3>
+                <div className="space-y-3 text-white text-sm">
+                  <div className="bg-blue-500 bg-opacity-20 rounded-lg p-3">
+                    <div className="font-bold">Connected TV</div>
+                    <div>Highest completion rates</div>
+                    <div>53% of video impressions</div>
+                  </div>
+                  <div className="bg-purple-500 bg-opacity-20 rounded-lg p-3">
+                    <div className="font-bold">Local Content</div>
+                    <div>Growing demand in Belgium</div>
+                    <div>Higher engagement potential</div>
+                  </div>
+                  <div className="bg-green-500 bg-opacity-20 rounded-lg p-3">
+                    <div className="font-bold">Cost-Effective</div>
+                    <div>43% prioritize price</div>
+                    <div>Ad-supported models growing</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 p-6 shadow-2xl">
+              <h3 className="text-2xl font-bold text-white mb-4">Key Insights for Belgian Video Strategy</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+                <div>
+                  <h4 className="font-bold text-lg mb-2">Market Position</h4>
+                  <ul className="text-sm space-y-1">
+                    <li>• Belgium video market growing 6.88% annually</li>
+                    <li>• 65.2% penetration rate with room for growth</li>
+                    <li>• Strong preference for cost-effective content</li>
+                    <li>• Localized content gaining traction</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold text-lg mb-2">Performance Targets</h4>
+                  <ul className="text-sm space-y-1">
+                    <li>• Aim for 60-80% completion rates</li>
+                    <li>• Keep videos under 2 minutes for best results</li>
+                    <li>• Focus on Connected TV distribution</li>
+                    <li>• Consider ad-supported models</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
