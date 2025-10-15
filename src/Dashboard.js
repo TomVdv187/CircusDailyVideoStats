@@ -47,7 +47,39 @@ const Dashboard = () => {
       return sportKeywords.some(keyword => title.includes(keyword));
     });
 
-    const monthlyStats = _.chain(circusData)
+    // Group videos with same titles and sum their metrics
+    const groupVideosByTitle = (videos) => {
+      return _.chain(videos)
+        .groupBy(row => (row.video || '').trim())
+        .map((group, title) => {
+          if (group.length === 1) {
+            return group[0];
+          }
+          
+          // Sum numerical values for grouped videos
+          const summedData = {
+            video: title,
+            Streams: _.sumBy(group, row => Number(row.Streams) || 0),
+            'Complétion Vidéo 25%': _.meanBy(group, row => Number(row['Complétion Vidéo 25%']) || 0),
+            'Complétion Vidéo 50%': _.meanBy(group, row => Number(row['Complétion Vidéo 50%']) || 0),
+            'Complétion Vidéo 75%': _.meanBy(group, row => Number(row['Complétion Vidéo 75%']) || 0),
+            'Complétion Vidéo 100%': _.meanBy(group, row => Number(row['Complétion Vidéo 100%']) || 0),
+            'Taux de complétion moyen (%)': _.meanBy(group, row => Number(row['Taux de complétion moyen (%)']) || 0),
+            'Average viewing time (m)': _.meanBy(group, row => Number(row['Average viewing time (m)']) || 0),
+            jour: group[0].jour,
+            catalogue: group[0].catalogue
+          };
+          
+          return summedData;
+        })
+        .value();
+    };
+
+    // Apply grouping to both datasets
+    const groupedCircusData = groupVideosByTitle(circusData);
+    const groupedSudinfoSportVideos = groupVideosByTitle(sudinfoSportVideos);
+
+    const monthlyStats = _.chain(groupedCircusData)
       .filter(row => row.jour)
       .map(row => ({ ...row, month: new Date(row.jour).toISOString().substring(0, 7) }))
       .groupBy('month')
@@ -66,24 +98,38 @@ const Dashboard = () => {
       .value();
 
     const calcStats = (dataSet) => {
-      const totalStreams = _.sumBy(dataSet, 'Streams') || 0;
-      const count = dataSet.length || 1;
+      if (!dataSet || dataSet.length === 0) {
+        return {
+          count: 0,
+          totalStreams: 0,
+          avgStreamsPerVideo: 0,
+          comp25: 0,
+          comp50: 0,
+          comp75: 0,
+          comp100: 0,
+          avgCompletionRate: 0,
+          avgViewTime: 0
+        };
+      }
+
+      const totalStreams = _.sumBy(dataSet, row => Number(row.Streams) || 0);
+      const count = dataSet.length;
       
       return {
-        count: dataSet.length,
-        totalStreams,
-        avgStreamsPerVideo: totalStreams / count,
-        comp25: _.meanBy(dataSet, row => row['Complétion Vidéo 25%'] || 0),
-        comp50: _.meanBy(dataSet, row => row['Complétion Vidéo 50%'] || 0),
-        comp75: _.meanBy(dataSet, row => row['Complétion Vidéo 75%'] || 0),
-        comp100: _.meanBy(dataSet, row => row['Complétion Vidéo 100%'] || 0),
-        avgCompletionRate: _.meanBy(dataSet, row => row['Taux de complétion moyen (%)'] || 0),
-        avgViewTime: _.meanBy(dataSet, row => row['Average viewing time (m)'] || 0)
+        count: count,
+        totalStreams: totalStreams,
+        avgStreamsPerVideo: count > 0 ? totalStreams / count : 0,
+        comp25: _.meanBy(dataSet, row => Number(row['Complétion Vidéo 25%']) || 0),
+        comp50: _.meanBy(dataSet, row => Number(row['Complétion Vidéo 50%']) || 0),
+        comp75: _.meanBy(dataSet, row => Number(row['Complétion Vidéo 75%']) || 0),
+        comp100: _.meanBy(dataSet, row => Number(row['Complétion Vidéo 100%']) || 0),
+        avgCompletionRate: _.meanBy(dataSet, row => Number(row['Taux de complétion moyen (%)']) || 0),
+        avgViewTime: _.meanBy(dataSet, row => Number(row['Average viewing time (m)']) || 0)
       };
     };
 
-    const circusStats = calcStats(circusData);
-    const sudinfoSportStats = calcStats(sudinfoSportVideos);
+    const circusStats = calcStats(groupedCircusData);
+    const sudinfoSportStats = calcStats(groupedSudinfoSportVideos);
 
     const circusFunnel = [
       { stage: 'Start', circus: 100, sudinfo: 100 },
@@ -108,16 +154,16 @@ const Dashboard = () => {
     ];
 
     setData({
-      circusData,
-      sudinfoSportVideos,
+      circusData: groupedCircusData,
+      sudinfoSportVideos: groupedSudinfoSportVideos,
       monthlyStats,
       circusStats,
       sudinfoSportStats,
       circusFunnel,
       circusDropoff,
       sudinfoDropoff,
-      topCircus: _.take(_.orderBy(circusData, 'Streams', 'desc'), 15),
-      topSudinfoSport: _.take(_.orderBy(sudinfoSportVideos, 'Streams', 'desc'), 10)
+      topCircus: _.take(_.orderBy(groupedCircusData, row => Number(row.Streams) || 0, 'desc'), 15),
+      topSudinfoSport: _.take(_.orderBy(groupedSudinfoSportVideos, row => Number(row.Streams) || 0, 'desc'), 10)
     });
   };
 
@@ -159,7 +205,9 @@ const Dashboard = () => {
     );
   }
 
-  const performanceGap = ((data.sudinfoSportStats.avgStreamsPerVideo - data.circusStats.avgStreamsPerVideo) / data.circusStats.avgStreamsPerVideo * 100);
+  const performanceGap = data.circusStats.avgStreamsPerVideo > 0 
+    ? ((data.sudinfoSportStats.avgStreamsPerVideo - data.circusStats.avgStreamsPerVideo) / data.circusStats.avgStreamsPerVideo * 100)
+    : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8">
