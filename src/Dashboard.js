@@ -37,15 +37,21 @@ const Dashboard = () => {
   const processData = () => {
     const sudinfoData = window.sudinfoData;
     const videoRawData = window.videoData;
-    const circusData = videoRawData.filter(row => row.catalogue === "Circus Daily");
+    
+    // Limit to first 100 videos for each dataset
+    const circusData = videoRawData
+      .filter(row => row.catalogue === "Circus Daily")
+      .slice(0, 100);
 
     const sportKeywords = ['football', 'sport', 'match', 'standard', 'anderlecht', 'charleroi', 'pro league', 
                            'champions', 'coupe', 'playoff', 'rouches', 'vestiaire', 'transfert', 'diables', 'goal'];
 
-    const sudinfoSportVideos = sudinfoData.filter(row => {
-      const title = (row.video || '').toLowerCase();
-      return sportKeywords.some(keyword => title.includes(keyword));
-    });
+    const sudinfoSportVideos = sudinfoData
+      .filter(row => {
+        const title = (row.video || '').toLowerCase();
+        return sportKeywords.some(keyword => title.includes(keyword));
+      })
+      .slice(0, 100);
 
     // Group videos with same titles and sum their metrics
     const groupVideosByTitle = (videos) => {
@@ -174,7 +180,7 @@ const Dashboard = () => {
           <div className="text-center mb-8">
             <Upload className="w-20 h-20 text-red-500 mx-auto mb-4" />
             <h2 className="text-4xl font-bold text-white mb-2">Circus Daily Analysis</h2>
-            <p className="text-white opacity-75">Upload both Excel files to begin</p>
+            <p className="text-white opacity-75">Upload both Excel files to analyze first 100 videos from each</p>
           </div>
           
           <div className="space-y-6">
@@ -215,10 +221,10 @@ const Dashboard = () => {
         
         <div className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
           <h1 className="text-5xl font-black text-white mb-2">Circus Daily Sports</h1>
-          <p className="text-xl text-white opacity-90">Performance Analysis vs Sudinfo Sport</p>
+          <p className="text-xl text-white opacity-90">Performance Analysis vs Sudinfo Sport (Top 100 Videos Each)</p>
           <div className="flex gap-4 mt-6">
             <div className="bg-white bg-opacity-20 rounded-lg px-4 py-2">
-              <div className="text-white text-sm">Videos</div>
+              <div className="text-white text-sm">Videos Analyzed</div>
               <div className="text-white font-bold">{data.circusStats.count} Circus | {data.sudinfoSportStats.count} Sudinfo</div>
             </div>
           </div>
