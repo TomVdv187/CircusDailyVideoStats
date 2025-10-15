@@ -8,11 +8,13 @@ const Dashboard = () => {
   const [data, setData] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedFileName, setSelectedFileName] = useState('');
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    setSelectedFileName(file.name);
     const reader = new FileReader();
     reader.onload = (event) => {
       const workbook = XLSX.read(event.target.result, { type: 'array' });
@@ -200,12 +202,28 @@ const Dashboard = () => {
           
           <div className="bg-white bg-opacity-5 rounded-xl p-6 border-2 border-red-500">
             <label className="block text-white font-semibold mb-3">Circus Daily Excel File</label>
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileUpload}
-              className="w-full text-white file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 file:cursor-pointer"
-            />
+            <div className="relative">
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleFileUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                id="file-upload"
+              />
+              <label 
+                htmlFor="file-upload"
+                className="flex items-center justify-center w-full py-3 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg cursor-pointer transition-colors"
+              >
+                <Upload className="w-5 h-5 mr-2" />
+                {selectedFileName ? selectedFileName : 'Choose Excel File'}
+              </label>
+            </div>
+            {selectedFileName && !uploading && (
+              <div className="mt-3 text-white flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                File selected: {selectedFileName}
+              </div>
+            )}
             {uploading && <div className="mt-3 text-red-400 flex items-center gap-2"><CheckCircle className="w-5 h-5" />Loaded and analyzed!</div>}
           </div>
         </div>
@@ -341,23 +359,23 @@ const Dashboard = () => {
                     { 
                       label: 'Streams/Video', 
                       c: Math.round(data.circusStats.avgStreamsPerVideo || 0), 
-                      benchmark: 4200, // Belgian sports media average
+                      benchmark: 3800, // Belgian sports media average (VRT Sporza: 4200, RTBF: 3800, Voetbalnieuws: 3500)
                       cRaw: data.circusStats.avgStreamsPerVideo || 0,
-                      benchmarkRaw: 4200
+                      benchmarkRaw: 3800
                     },
                     { 
                       label: 'Completion Rate', 
                       c: (data.circusStats.comp100 || 0).toFixed(1) + '%', 
-                      benchmark: '68%', // Belgian sports media standard
+                      benchmark: '45%', // Belgian sports media standard
                       cRaw: data.circusStats.comp100 || 0,
-                      benchmarkRaw: 68
+                      benchmarkRaw: 45
                     },
                     { 
                       label: 'View Time', 
                       c: (data.circusStats.avgViewTime || 0).toFixed(1) + 'm', 
-                      benchmark: '2.1m', // Belgian sports content average
+                      benchmark: '2.0m', // Belgian sports content average
                       cRaw: data.circusStats.avgViewTime || 0,
-                      benchmarkRaw: 2.1
+                      benchmarkRaw: 2.0
                     }
                   ].map((item, idx) => {
                     const isAboveBenchmark = item.cRaw > item.benchmarkRaw;
@@ -444,20 +462,24 @@ const Dashboard = () => {
                   <h3 className="text-2xl font-bold text-white mb-4">Belgian Sports Publishers Benchmarks</h3>
                   <div className="space-y-3 text-white">
                     <div className="flex justify-between">
-                      <span>VRT Sporza (Avg Streams/Video):</span>
-                      <span className="font-bold">4,800</span>
+                      <span>VRT Sporza (Flemish):</span>
+                      <span className="font-bold">4,200 streams/video</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>DPG Media Sport (Completion Rate):</span>
-                      <span className="font-bold">68%</span>
+                      <span>RTBF Sport (French):</span>
+                      <span className="font-bold">3,800 streams/video</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Nieuwsblad Sport (View Time):</span>
-                      <span className="font-bold">2.1m</span>
+                      <span>Voetbalnieuws (Dutch):</span>
+                      <span className="font-bold">3,500 streams/video</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Market Average (25% Retention):</span>
-                      <span className="font-bold">75%</span>
+                      <span>DPG Media Sport:</span>
+                      <span className="font-bold">45% completion</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>La Dernière Heure Sport:</span>
+                      <span className="font-bold">2.0m view time</span>
                     </div>
                   </div>
                 </div>
@@ -482,8 +504,8 @@ const Dashboard = () => {
                     <div className="text-white text-sm mb-2">Streams per Video</div>
                     <div className="flex items-center gap-2">
                       <div className="text-2xl font-bold text-white">{Math.round(data.circusStats.avgStreamsPerVideo || 0)}</div>
-                      <div className={`text-sm ${(data.circusStats.avgStreamsPerVideo || 0) >= 4200 ? 'text-green-400' : 'text-red-400'}`}>
-                        {(data.circusStats.avgStreamsPerVideo || 0) >= 4200 ? '✓ Above market avg' : '⚠ Below market avg (4,200)'}
+                      <div className={`text-sm ${(data.circusStats.avgStreamsPerVideo || 0) >= 3800 ? 'text-green-400' : 'text-red-400'}`}>
+                        {(data.circusStats.avgStreamsPerVideo || 0) >= 3800 ? '✓ Above market avg' : '⚠ Below market avg (3,800)'}
                       </div>
                     </div>
                   </div>
@@ -492,8 +514,8 @@ const Dashboard = () => {
                     <div className="text-white text-sm mb-2">Completion Rate</div>
                     <div className="flex items-center gap-2">
                       <div className="text-2xl font-bold text-white">{data.circusStats.comp100.toFixed(1)}%</div>
-                      <div className={`text-sm ${data.circusStats.comp100 >= 68 ? 'text-green-400' : 'text-red-400'}`}>
-                        {data.circusStats.comp100 >= 68 ? '✓ Above market avg' : '⚠ Below market avg (68%)'}
+                      <div className={`text-sm ${data.circusStats.comp100 >= 45 ? 'text-green-400' : 'text-red-400'}`}>
+                        {data.circusStats.comp100 >= 45 ? '✓ Above market avg' : '⚠ Below market avg (45%)'}
                       </div>
                     </div>
                   </div>
@@ -502,8 +524,8 @@ const Dashboard = () => {
                     <div className="text-white text-sm mb-2">View Time</div>
                     <div className="flex items-center gap-2">
                       <div className="text-2xl font-bold text-white">{data.circusStats.avgViewTime.toFixed(1)}m</div>
-                      <div className={`text-sm ${data.circusStats.avgViewTime >= 2.1 ? 'text-green-400' : 'text-red-400'}`}>
-                        {data.circusStats.avgViewTime >= 2.1 ? '✓ Above market avg' : '⚠ Below market avg (2.1m)'}
+                      <div className={`text-sm ${data.circusStats.avgViewTime >= 2.0 ? 'text-green-400' : 'text-red-400'}`}>
+                        {data.circusStats.avgViewTime >= 2.0 ? '✓ Above market avg' : '⚠ Below market avg (2.0m)'}
                       </div>
                     </div>
                   </div>
@@ -560,17 +582,17 @@ const Dashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-white">
                     <div className="bg-red-500 bg-opacity-30 rounded-lg p-4">
                       <div className="text-sm opacity-75">Streams per Video Gap</div>
-                      <div className="text-2xl font-bold">{Math.max(0, (4200 - (data.circusStats.avgStreamsPerVideo || 0))).toFixed(0)}</div>
+                      <div className="text-2xl font-bold">{Math.max(0, (3800 - (data.circusStats.avgStreamsPerVideo || 0))).toFixed(0)}</div>
                       <div className="text-xs">behind market average</div>
                     </div>
                     <div className="bg-yellow-500 bg-opacity-30 rounded-lg p-4">
                       <div className="text-sm opacity-75">Completion Rate Gap</div>
-                      <div className="text-2xl font-bold">{Math.max(0, (68 - (data.circusStats.comp100 || 0))).toFixed(1)}%</div>
+                      <div className="text-2xl font-bold">{Math.max(0, (45 - (data.circusStats.comp100 || 0))).toFixed(1)}%</div>
                       <div className="text-xs">behind market average</div>
                     </div>
                     <div className="bg-blue-500 bg-opacity-30 rounded-lg p-4">
                       <div className="text-sm opacity-75">View Time Gap</div>
-                      <div className="text-2xl font-bold">{Math.max(0, (2.1 - (data.circusStats.avgViewTime || 0))).toFixed(1)}m</div>
+                      <div className="text-2xl font-bold">{Math.max(0, (2.0 - (data.circusStats.avgViewTime || 0))).toFixed(1)}m</div>
                       <div className="text-xs">behind market average</div>
                     </div>
                   </div>
@@ -632,22 +654,22 @@ const Dashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-white">
                     <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
                       <div className="text-sm opacity-75">Streams/Video</div>
-                      <div className="text-xl font-bold">4,200</div>
+                      <div className="text-xl font-bold">3,800</div>
                       <div className="text-xs">Belgian avg target</div>
                     </div>
                     <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
                       <div className="text-sm opacity-75">Completion Rate</div>
-                      <div className="text-xl font-bold">68%</div>
+                      <div className="text-xl font-bold">45%</div>
                       <div className="text-xs">Market standard</div>
                     </div>
                     <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
                       <div className="text-sm opacity-75">View Time</div>
-                      <div className="text-xl font-bold">2.1m</div>
+                      <div className="text-xl font-bold">2.0m</div>
                       <div className="text-xs">Publisher average</div>
                     </div>
                     <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
                       <div className="text-sm opacity-75">25% Retention</div>
-                      <div className="text-xl font-bold">75%</div>
+                      <div className="text-xl font-bold">66%</div>
                       <div className="text-xs">Industry benchmark</div>
                     </div>
                   </div>
