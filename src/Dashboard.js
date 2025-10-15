@@ -58,11 +58,61 @@ const Dashboard = () => {
         .value();
     };
 
+    // Language detection function
+    const detectLanguage = (title) => {
+      if (!title) return 'NL'; // Default empty titles to Dutch
+      
+      // French indicators
+      const frenchKeywords = ['le ', 'la ', 'les ', 'du ', 'de ', 'des ', 'et ', 'est ', 'avec ', 'pour ', 'dans ', 'sur ', 'par ', 'un ', 'une ', 'ce ', 'cette ', 'ses ', 'son ', 'sa ', 'qui ', 'que ', 'mais ', 'où ', 'comment ', 'quand', 'goal', 'but', 'match', 'équipe', 'joueur', 'victoire', 'défaite', 'contre', 'après', 'avant'];
+      
+      // Dutch indicators  
+      const dutchKeywords = ['de ', 'het ', 'een ', 'van ', 'in ', 'op ', 'voor ', 'met ', 'door ', 'bij ', 'naar ', 'om ', 'over', 'doelpunt', 'goal', 'wedstrijd', 'team', 'speler', 'overwinning', 'nederlaag', 'tegen', 'vs ', 'match', 'uit ', 'thuis', 'club'];
+      
+      const titleLower = title.toLowerCase();
+      
+      let frenchScore = 0;
+      let dutchScore = 0;
+      
+      frenchKeywords.forEach(keyword => {
+        if (titleLower.includes(keyword)) frenchScore++;
+      });
+      
+      dutchKeywords.forEach(keyword => {
+        if (titleLower.includes(keyword)) dutchScore++;
+      });
+      
+      // Strong indicators for Dutch
+      if (titleLower.includes('club brugge') || titleLower.includes('krc genk') || titleLower.includes('racing genk')) {
+        return 'NL';
+      }
+      
+      // Strong indicators for French
+      if (titleLower.includes('standard liège') || titleLower.includes('standard de liège')) {
+        return 'FR';
+      }
+      
+      if (frenchScore > dutchScore) return 'FR';
+      if (dutchScore > frenchScore) return 'NL';
+      
+      // If no clear indicators, check for typical Belgian team names and context
+      if (titleLower.includes('standard') || titleLower.includes('anderlecht') || titleLower.includes('bruges')) {
+        // Default to French if no clear language indicators with Belgian teams
+        return 'FR';
+      }
+      
+      // Default unknown content to Dutch as requested
+      return 'NL';
+    };
+
     // Apply grouping and get top 100 by performance
     const groupedCircusData = groupVideosByTitle(allCircusData);
     const top100CircusData = _.chain(groupedCircusData)
       .orderBy(row => Number(row.Streams) || 0, 'desc')
       .take(100)
+      .map(video => ({
+        ...video,
+        language: detectLanguage(video.video)
+      }))
       .value();
 
     const monthlyStats = _.chain(top100CircusData)
@@ -116,10 +166,24 @@ const Dashboard = () => {
 
     const circusStats = calcStats(top100CircusData);
 
+    // Calculate language breakdown
+    const languageStats = _.chain(top100CircusData)
+      .groupBy('language')
+      .map((videos, language) => ({
+        language,
+        count: videos.length,
+        percentage: (videos.length / top100CircusData.length * 100).toFixed(1),
+        avgStreams: _.meanBy(videos, v => Number(v.Streams) || 0),
+        avgCompletion: _.meanBy(videos, v => Number(v['Complétion Vidéo 100%']) || 0),
+        avgViewTime: _.meanBy(videos, v => Number(v['Average viewing time (m)']) || 0)
+      }))
+      .value();
+
     setData({
       circusData: top100CircusData,
       monthlyStats,
       circusStats,
+      languageStats,
       topCircus: _.take(top100CircusData, 10)
     });
   };
@@ -161,6 +225,12 @@ const Dashboard = () => {
             <div className="bg-white bg-opacity-20 rounded-lg px-4 py-2">
               <div className="text-white text-sm">Videos Analyzed</div>
               <div className="text-white font-bold">{data.circusStats.count} Circus Daily Videos</div>
+            </div>
+            <div className="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+              <div className="text-white text-sm">Language Split</div>
+              <div className="text-white font-bold">
+                {data.languageStats.find(l => l.language === 'FR')?.count || 0} FR / {data.languageStats.find(l => l.language === 'NL')?.count || 0} NL
+              </div>
             </div>
           </div>
         </div>
@@ -230,7 +300,40 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <div className="rounded-2xl bg-white bg-opacity-10 p-6 shadow-2xl">
+                <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                  🇧🇪 Language Performance Split
+                </h2>
+                <div className="space-y-4">
+                  {data.languageStats.map((lang, idx) => (
+                    <div key={idx} className="bg-white bg-opacity-5 rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <div className="text-white font-bold text-lg">
+                          {lang.language === 'FR' ? '🇫🇷 French' : '🇳🇱 Dutch'}
+                        </div>
+                        <div className="text-white text-2xl font-black">{lang.count} videos</div>
+                      </div>
+                      <div className="text-white text-sm mb-2 opacity-75">{lang.percentage}% of top 100</div>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="bg-blue-500 bg-opacity-20 rounded p-2 text-center">
+                          <div className="text-blue-200">Avg Streams</div>
+                          <div className="text-white font-bold">{Math.round(lang.avgStreams)}</div>
+                        </div>
+                        <div className="bg-green-500 bg-opacity-20 rounded p-2 text-center">
+                          <div className="text-green-200">Completion</div>
+                          <div className="text-white font-bold">{lang.avgCompletion.toFixed(1)}%</div>
+                        </div>
+                        <div className="bg-yellow-500 bg-opacity-20 rounded p-2 text-center">
+                          <div className="text-yellow-200">View Time</div>
+                          <div className="text-white font-bold">{lang.avgViewTime.toFixed(1)}m</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="rounded-2xl bg-white bg-opacity-10 p-6 shadow-2xl">
                 <h2 className="text-2xl font-bold text-white mb-4">Belgian Sports Publisher Benchmarks</h2>
                 <div className="space-y-4">
