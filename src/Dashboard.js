@@ -504,7 +504,7 @@ const Dashboard = () => {
             </div>
 
             <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 p-8 shadow-2xl">
-              <h2 className="text-4xl font-bold text-white mb-6">Belgian & European Video Benchmarks 2024</h2>
+              <h2 className="text-4xl font-bold text-white mb-6">Belgian & European Video Benchmarks 2025</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white bg-opacity-20 rounded-xl p-6">
                   <h3 className="text-2xl font-bold text-white mb-4">Belgian Sports Publishers Benchmarks</h3>
@@ -533,12 +533,13 @@ const Dashboard = () => {
                 </div>
                 
                 <div className="bg-white bg-opacity-20 rounded-xl p-6">
-                  <h3 className="text-2xl font-bold text-white mb-4">Belgian Sports Media Market</h3>
+                  <h3 className="text-2xl font-bold text-white mb-4">Belgian Sports Media Market 2025</h3>
                   <div className="space-y-2 text-white text-sm">
-                    <div>• Sports video consumption: <strong>46%</strong> of Belgians</div>
-                    <div>• Mobile viewing growth: <strong>35%</strong> of sport videos</div>
+                    <div>• Sports video consumption: <strong>52%</strong> of Belgians (growing)</div>
+                    <div>• Mobile viewing: <strong>42%</strong> of sport videos (increased)</div>
                     <div>• Local team preference: <strong>Pro League</strong> dominates</div>
-                    <div>• Short-form content: <strong>25%</strong> prefer highlights</div>
+                    <div>• Short-form content: <strong>31%</strong> prefer highlights (growing)</div>
+                    <div>• Connected TV growth: <strong>28%</strong> sports viewing increase</div>
                   </div>
                 </div>
               </div>
@@ -614,7 +615,7 @@ const Dashboard = () => {
                   <div className="bg-green-500 bg-opacity-20 rounded-lg p-3">
                     <div className="font-bold">Cost-Effective</div>
                     <div>43% prioritize price</div>
-                    <div>Ad-supported models growing</div>
+                    <div>Free content preference</div>
                   </div>
                 </div>
               </div>
@@ -678,8 +679,8 @@ const Dashboard = () => {
                     <div>
                       <h5 className="font-bold text-lg mb-3 text-green-300">Cost-Conscious Audience (43%)</h5>
                       <ul className="text-sm space-y-2">
-                        <li>• Focus on <strong>free, ad-supported content</strong></li>
-                        <li>• Shorter ads (15-30s) for better completion</li>
+                        <li>• Focus on <strong>free content</strong></li>
+                        <li>• Keep content concise and engaging</li>
                         <li>• Partner with local brands for sponsorship</li>
                         <li>• Highlight "free highlights" in marketing</li>
                       </ul>
