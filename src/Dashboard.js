@@ -6,52 +6,29 @@ import { TrendingUp, Target, Lightbulb, CheckCircle, AlertTriangle, Award, Eye, 
 
 const Dashboard = () => {
   const [data, setData] = useState(null);
-  const [uploading, setUploading] = useState({ sudinfo: false, video: false });
+  const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const handleFileUpload = (e, fileType) => {
+  const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
       const workbook = XLSX.read(event.target.result, { type: 'array' });
-      
-      if (fileType === 'sudinfo') {
-        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        window.sudinfoData = jsonData;
-        setUploading(prev => ({ ...prev, sudinfo: true }));
-      } else {
-        const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets["Raw data"]);
-        window.videoData = jsonData;
-        setUploading(prev => ({ ...prev, video: true }));
-      }
-
-      if (window.sudinfoData && window.videoData) {
-        processData();
-      }
+      const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets["Raw data"]);
+      window.videoData = jsonData;
+      setUploading(true);
+      processData();
     };
     reader.readAsArrayBuffer(file);
   };
 
   const processData = () => {
-    const sudinfoData = window.sudinfoData;
     const videoRawData = window.videoData;
     
-    // Limit to first 100 videos for each dataset
-    const circusData = videoRawData
-      .filter(row => row.catalogue === "Circus Daily")
-      .slice(0, 100);
-
-    const sportKeywords = ['football', 'sport', 'match', 'standard', 'anderlecht', 'charleroi', 'pro league', 
-                           'champions', 'coupe', 'playoff', 'rouches', 'vestiaire', 'transfert', 'diables', 'goal'];
-
-    const sudinfoSportVideos = sudinfoData
-      .filter(row => {
-        const title = (row.video || '').toLowerCase();
-        return sportKeywords.some(keyword => title.includes(keyword));
-      })
-      .slice(0, 100);
+    // Get all Circus Daily videos and limit to top 100 by performance
+    const allCircusData = videoRawData.filter(row => row.catalogue === "Circus Daily");
 
     // Group videos with same titles and sum their metrics
     const groupVideosByTitle = (videos) => {
@@ -81,11 +58,14 @@ const Dashboard = () => {
         .value();
     };
 
-    // Apply grouping to both datasets
-    const groupedCircusData = groupVideosByTitle(circusData);
-    const groupedSudinfoSportVideos = groupVideosByTitle(sudinfoSportVideos);
+    // Apply grouping and get top 100 by performance
+    const groupedCircusData = groupVideosByTitle(allCircusData);
+    const top100CircusData = _.chain(groupedCircusData)
+      .orderBy(row => Number(row.Streams) || 0, 'desc')
+      .take(100)
+      .value();
 
-    const monthlyStats = _.chain(groupedCircusData)
+    const monthlyStats = _.chain(top100CircusData)
       .filter(row => row.jour)
       .map(row => ({ ...row, month: new Date(row.jour).toISOString().substring(0, 7) }))
       .groupBy('month')
@@ -134,42 +114,13 @@ const Dashboard = () => {
       };
     };
 
-    const circusStats = calcStats(groupedCircusData);
-    const sudinfoSportStats = calcStats(groupedSudinfoSportVideos);
-
-    const circusFunnel = [
-      { stage: 'Start', circus: 100, sudinfo: 100 },
-      { stage: '25%', circus: circusStats.comp25, sudinfo: sudinfoSportStats.comp25 },
-      { stage: '50%', circus: circusStats.comp50, sudinfo: sudinfoSportStats.comp50 },
-      { stage: '75%', circus: circusStats.comp75, sudinfo: sudinfoSportStats.comp75 },
-      { stage: '100%', circus: circusStats.comp100, sudinfo: sudinfoSportStats.comp100 }
-    ];
-
-    const circusDropoff = [
-      { stage: 'Start-25%', dropoff: 100 - circusStats.comp25 },
-      { stage: '25-50%', dropoff: circusStats.comp25 - circusStats.comp50 },
-      { stage: '50-75%', dropoff: circusStats.comp50 - circusStats.comp75 },
-      { stage: '75-100%', dropoff: circusStats.comp75 - circusStats.comp100 }
-    ];
-
-    const sudinfoDropoff = [
-      { stage: 'Start-25%', dropoff: 100 - sudinfoSportStats.comp25 },
-      { stage: '25-50%', dropoff: sudinfoSportStats.comp25 - sudinfoSportStats.comp50 },
-      { stage: '50-75%', dropoff: sudinfoSportStats.comp50 - sudinfoSportStats.comp75 },
-      { stage: '75-100%', dropoff: sudinfoSportStats.comp75 - sudinfoSportStats.comp100 }
-    ];
+    const circusStats = calcStats(top100CircusData);
 
     setData({
-      circusData: groupedCircusData,
-      sudinfoSportVideos: groupedSudinfoSportVideos,
+      circusData: top100CircusData,
       monthlyStats,
       circusStats,
-      sudinfoSportStats,
-      circusFunnel,
-      circusDropoff,
-      sudinfoDropoff,
-      topCircus: _.take(_.orderBy(groupedCircusData, row => Number(row.Streams) || 0, 'desc'), 10),
-      topSudinfoSport: _.take(_.orderBy(groupedSudinfoSportVideos, row => Number(row.Streams) || 0, 'desc'), 10)
+      topCircus: _.take(top100CircusData, 10)
     });
   };
 
@@ -180,40 +131,24 @@ const Dashboard = () => {
           <div className="text-center mb-8">
             <Upload className="w-20 h-20 text-red-500 mx-auto mb-4" />
             <h2 className="text-4xl font-bold text-white mb-2">Circus Daily Analysis</h2>
-            <p className="text-white opacity-75">Upload both Excel files to analyze first 100 videos from each</p>
+            <p className="text-white opacity-75">Upload your Circus Daily Excel file to analyze top 100 videos</p>
           </div>
           
-          <div className="space-y-6">
-            <div className="bg-white bg-opacity-5 rounded-xl p-6 border-2 border-red-500">
-              <label className="block text-white font-semibold mb-3">1. Sudinfo File</label>
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={(e) => handleFileUpload(e, 'sudinfo')}
-                className="w-full text-white file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 file:cursor-pointer"
-              />
-              {uploading.sudinfo && <div className="mt-3 text-red-400 flex items-center gap-2"><CheckCircle className="w-5 h-5" />Loaded</div>}
-            </div>
-
-            <div className="bg-white bg-opacity-5 rounded-xl p-6 border-2 border-slate-500">
-              <label className="block text-white font-semibold mb-3">2. Circus Daily File</label>
-              <input
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={(e) => handleFileUpload(e, 'video')}
-                className="w-full text-white file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:font-semibold file:bg-slate-700 file:text-white hover:file:bg-slate-800 file:cursor-pointer"
-              />
-              {uploading.video && <div className="mt-3 text-red-400 flex items-center gap-2"><CheckCircle className="w-5 h-5" />Loaded</div>}
-            </div>
+          <div className="bg-white bg-opacity-5 rounded-xl p-6 border-2 border-red-500">
+            <label className="block text-white font-semibold mb-3">Circus Daily Excel File</label>
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleFileUpload}
+              className="w-full text-white file:mr-4 file:py-3 file:px-6 file:rounded-lg file:border-0 file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700 file:cursor-pointer"
+            />
+            {uploading && <div className="mt-3 text-red-400 flex items-center gap-2"><CheckCircle className="w-5 h-5" />Loaded and analyzed!</div>}
           </div>
         </div>
       </div>
     );
   }
 
-  const performanceGap = data.circusStats.avgStreamsPerVideo > 0 
-    ? ((data.sudinfoSportStats.avgStreamsPerVideo - data.circusStats.avgStreamsPerVideo) / data.circusStats.avgStreamsPerVideo * 100)
-    : 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4 md:p-8">
