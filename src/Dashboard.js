@@ -231,7 +231,7 @@ const Dashboard = () => {
         </div>
 
         <div className="flex gap-3 mb-8">
-          {['overview', 'completion', 'evolution', 'improvements', 'benchmarks'].map(tab => (
+          {['overview', 'completion', 'benchmarks'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -455,60 +455,6 @@ const Dashboard = () => {
           </>
         )}
 
-        {activeTab === 'evolution' && (
-          <div className="rounded-2xl bg-white bg-opacity-10 p-6 shadow-2xl">
-            <h2 className="text-3xl font-bold text-white mb-6">Monthly Evolution</h2>
-            <ResponsiveContainer width="100%" height={400}>
-              <AreaChart data={data.monthlyStats}>
-                <defs>
-                  <linearGradient id="colorStreams" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                <XAxis dataKey="monthLabel" stroke="#fff" />
-                <YAxis stroke="#fff" />
-                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }} />
-                <Area type="monotone" dataKey="totalStreams" stroke="#3b82f6" fill="url(#colorStreams)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        {activeTab === 'improvements' && (
-          <div className="rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 p-8 shadow-2xl">
-            <h2 className="text-4xl font-bold text-white mb-6">Strategic Recommendations</h2>
-            <div className="space-y-4 text-white">
-              <div className="bg-white bg-opacity-20 rounded-xl p-6">
-                <h3 className="text-2xl font-bold mb-3">1. Boost Streams per Video</h3>
-                <p className="mb-2">Target: {Math.round(data.sudinfoSportStats.avgStreamsPerVideo)} (Current: {Math.round(data.circusStats.avgStreamsPerVideo)})</p>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Optimize titles with team names and scores</li>
-                  <li>Improve thumbnails with action shots</li>
-                  <li>Post at optimal times</li>
-                </ul>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-xl p-6">
-                <h3 className="text-2xl font-bold mb-3">2. Increase Completion Rates</h3>
-                <p className="mb-2">Target: {data.sudinfoSportStats.comp100.toFixed(1)}% (Current: {data.circusStats.comp100.toFixed(1)}%)</p>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Cut intros to under 3 seconds</li>
-                  <li>Front-load best moments</li>
-                  <li>Remove unnecessary outros</li>
-                </ul>
-              </div>
-              <div className="bg-white bg-opacity-20 rounded-xl p-6">
-                <h3 className="text-2xl font-bold mb-3">3. Launch Recurring Series</h3>
-                <ul className="list-disc list-inside space-y-1 text-sm">
-                  <li>Create weekly debrief format</li>
-                  <li>Use consistent hosts</li>
-                  <li>Build episode continuity</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
 
         {activeTab === 'benchmarks' && (
           <div className="space-y-6">
@@ -611,27 +557,143 @@ const Dashboard = () => {
               </div>
             </div>
 
-            <div className="rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 p-6 shadow-2xl">
-              <h3 className="text-2xl font-bold text-white mb-4">Key Insights for Belgian Video Strategy</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
-                <div>
-                  <h4 className="font-bold text-lg mb-2">Market Position</h4>
-                  <ul className="text-sm space-y-1">
-                    <li>• Belgium video market growing 6.88% annually</li>
-                    <li>• 65.2% penetration rate with room for growth</li>
-                    <li>• Strong preference for cost-effective content</li>
-                    <li>• Localized content gaining traction</li>
-                  </ul>
+            <div className="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 p-8 shadow-2xl">
+              <h3 className="text-3xl font-bold text-white mb-6">🎯 Specific Recommendations for Circus Daily</h3>
+              <div className="space-y-6">
+                
+                {/* Performance Gap Analysis */}
+                <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                  <h4 className="text-xl font-bold text-white mb-4">📊 Performance Gap Analysis</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-white">
+                    <div className="bg-red-500 bg-opacity-30 rounded-lg p-4">
+                      <div className="text-sm opacity-75">Streams per Video Gap</div>
+                      <div className="text-2xl font-bold">{((data.sudinfoSportStats.avgStreamsPerVideo - data.circusStats.avgStreamsPerVideo) || 0).toFixed(0)}</div>
+                      <div className="text-xs">streams behind Sudinfo</div>
+                    </div>
+                    <div className="bg-yellow-500 bg-opacity-30 rounded-lg p-4">
+                      <div className="text-sm opacity-75">Completion Rate Gap</div>
+                      <div className="text-2xl font-bold">{((data.sudinfoSportStats.comp100 - data.circusStats.comp100) || 0).toFixed(1)}%</div>
+                      <div className="text-xs">behind Sudinfo</div>
+                    </div>
+                    <div className="bg-blue-500 bg-opacity-30 rounded-lg p-4">
+                      <div className="text-sm opacity-75">View Time Gap</div>
+                      <div className="text-2xl font-bold">{((data.sudinfoSportStats.avgViewTime - data.circusStats.avgViewTime) || 0).toFixed(1)}m</div>
+                      <div className="text-xs">behind Sudinfo</div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-lg mb-2">Performance Targets</h4>
-                  <ul className="text-sm space-y-1">
-                    <li>• Aim for 60-80% completion rates</li>
-                    <li>• Keep videos under 2 minutes for best results</li>
-                    <li>• Focus on Connected TV distribution</li>
-                    <li>• Consider ad-supported models</li>
-                  </ul>
+
+                {/* Immediate Actions */}
+                <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                  <h4 className="text-xl font-bold text-white mb-4">🚀 Immediate Actions (Next 30 Days)</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+                    <div>
+                      <h5 className="font-bold text-lg mb-3 text-yellow-300">Content Optimization</h5>
+                      <ul className="text-sm space-y-2">
+                        <li>• <strong>Hook in first 3 seconds:</strong> Start with the most exciting moment</li>
+                        <li>• <strong>Team-focused titles:</strong> "Standard vs Anderlecht" performs better than generic titles</li>
+                        <li>• <strong>Score in thumbnail:</strong> Belgian audiences love knowing the result upfront</li>
+                        <li>• <strong>Player names in titles:</strong> Use local player names for SEO</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-lg mb-3 text-yellow-300">Technical Improvements</h5>
+                      <ul className="text-sm space-y-2">
+                        <li>• <strong>Target 1-2 minutes:</strong> Sweet spot for 56% completion rate</li>
+                        <li>• <strong>Remove intros:</strong> Jump straight to action</li>
+                        <li>• <strong>Add captions:</strong> 25% of Belgians watch without sound</li>
+                        <li>• <strong>Mobile-first:</strong> 35% of views are mobile</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
+
+                {/* Belgian Market Strategy */}
+                <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                  <h4 className="text-xl font-bold text-white mb-4">🇧🇪 Belgian Market Strategy</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+                    <div>
+                      <h5 className="font-bold text-lg mb-3 text-green-300">Cost-Conscious Audience (43%)</h5>
+                      <ul className="text-sm space-y-2">
+                        <li>• Focus on <strong>free, ad-supported content</strong></li>
+                        <li>• Shorter ads (15-30s) for better completion</li>
+                        <li>• Partner with local brands for sponsorship</li>
+                        <li>• Highlight "free highlights" in marketing</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-lg mb-3 text-green-300">Local Content Preference</h5>
+                      <ul className="text-sm space-y-2">
+                        <li>• <strong>Pro League focus:</strong> Standard, Anderlecht, Club Brugge</li>
+                        <li>• Local commentators and analysis</li>
+                        <li>• Behind-the-scenes with Belgian players</li>
+                        <li>• Fan reactions from Belgian stadiums</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Target Metrics */}
+                <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                  <h4 className="text-xl font-bold text-white mb-4">🎯 90-Day Target Metrics</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-white">
+                    <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
+                      <div className="text-sm opacity-75">Streams/Video</div>
+                      <div className="text-xl font-bold">{Math.round((data.circusStats.avgStreamsPerVideo || 0) * 1.3)}</div>
+                      <div className="text-xs">+30% target</div>
+                    </div>
+                    <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
+                      <div className="text-sm opacity-75">Completion Rate</div>
+                      <div className="text-xl font-bold">{Math.min(((data.circusStats.comp100 || 0) + 15), 80).toFixed(0)}%</div>
+                      <div className="text-xs">+15% target</div>
+                    </div>
+                    <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
+                      <div className="text-sm opacity-75">View Time</div>
+                      <div className="text-xl font-bold">{((data.circusStats.avgViewTime || 0) + 0.5).toFixed(1)}m</div>
+                      <div className="text-xs">+0.5m target</div>
+                    </div>
+                    <div className="bg-green-500 bg-opacity-30 rounded-lg p-4 text-center">
+                      <div className="text-sm opacity-75">25% Retention</div>
+                      <div className="text-xl font-bold">{Math.min(((data.circusStats.comp25 || 0) + 10), 90).toFixed(0)}%</div>
+                      <div className="text-xs">+10% target</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content Calendar */}
+                <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                  <h4 className="text-xl font-bold text-white mb-4">📅 Content Strategy for Belgian Market</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+                    <div>
+                      <h5 className="font-bold text-lg mb-3 text-blue-300">High-Performing Content</h5>
+                      <ul className="text-sm space-y-1">
+                        <li>• Goal compilations (1-2 min)</li>
+                        <li>• Match highlights with local commentary</li>
+                        <li>• Player interviews (Belgian players)</li>
+                        <li>• Derby matches (Standard vs others)</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-lg mb-3 text-blue-300">Posting Schedule</h5>
+                      <ul className="text-sm space-y-1">
+                        <li>• <strong>Sunday 20:00:</strong> Match highlights</li>
+                        <li>• <strong>Wednesday 18:00:</strong> Player features</li>
+                        <li>• <strong>Friday 16:00:</strong> Preview content</li>
+                        <li>• <strong>Post-match:</strong> Immediate goals/key moments</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h5 className="font-bold text-lg mb-3 text-blue-300">Platform Strategy</h5>
+                      <ul className="text-sm space-y-1">
+                        <li>• <strong>Connected TV:</strong> Longer highlights (2-3min)</li>
+                        <li>• <strong>Mobile:</strong> Quick goals (30-60s)</li>
+                        <li>• <strong>Desktop:</strong> Analysis pieces (3-5min)</li>
+                        <li>• <strong>Social:</strong> Teaser clips (15-30s)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
