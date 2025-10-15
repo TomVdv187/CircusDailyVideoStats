@@ -237,8 +237,27 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto">
         
         <div className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
-          <h1 className="text-5xl font-black text-white mb-2">Circus Daily Sports</h1>
-          <p className="text-xl text-white opacity-90">Performance Analysis vs Belgian Sports Publishers (Top 100 Videos)</p>
+          <div className="flex items-center gap-6 mb-4">
+            <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+              {/* Replace src with actual Circus Daily logo URL */}
+              <img 
+                src="https://www.circusdaily.com/logo.png" 
+                alt="Circus Daily Logo" 
+                className="w-16 h-16 object-contain"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="w-16 h-16 bg-red-600 rounded-full items-center justify-center text-white font-bold text-xl hidden">
+                CD
+              </div>
+            </div>
+            <div>
+              <h1 className="text-5xl font-black text-white mb-2">Circus Daily Sports</h1>
+              <p className="text-xl text-white opacity-90">Performance Analysis vs Belgian Sports Publishers (Top 100 Videos)</p>
+            </div>
+          </div>
           
           <div className="flex gap-4 mt-6">
             <div className="bg-white bg-opacity-20 rounded-lg px-4 py-2">
