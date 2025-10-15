@@ -239,6 +239,23 @@ const Dashboard = () => {
         <div className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 p-8 shadow-2xl">
           <h1 className="text-5xl font-black text-white mb-2">Circus Daily Sports</h1>
           <p className="text-xl text-white opacity-90">Performance Analysis vs Belgian Sports Publishers (Top 100 Videos)</p>
+          
+          {/* Dutch Content Alert */}
+          {(data.languageStats.find(l => l.language === 'NL')?.count || 0) < 30 && (
+            <div className="mt-4 bg-orange-500 bg-opacity-30 border-2 border-orange-400 rounded-xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">🚨</div>
+                <div>
+                  <div className="text-white font-bold text-lg">Critical: Dutch Content Gap Detected</div>
+                  <div className="text-white text-sm opacity-90">
+                    Only {data.languageStats.find(l => l.language === 'NL')?.count || 0} Dutch videos in top 100. 
+                    Missing 60% of Belgian market (Flanders). Immediate action required!
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-4 mt-6">
             <div className="bg-white bg-opacity-20 rounded-lg px-4 py-2">
               <div className="text-white text-sm">Videos Analyzed</div>
@@ -247,8 +264,15 @@ const Dashboard = () => {
             <div className="bg-white bg-opacity-20 rounded-lg px-4 py-2">
               <div className="text-white text-sm">Language Split</div>
               <div className="text-white font-bold">
-                {data.languageStats.find(l => l.language === 'FR')?.count || 0} FR / {data.languageStats.find(l => l.language === 'NL')?.count || 0} NL
+                {data.languageStats.find(l => l.language === 'FR')?.count || 0} FR / 
+                <span className={`${(data.languageStats.find(l => l.language === 'NL')?.count || 0) < 30 ? 'text-orange-300' : ''}`}>
+                  {data.languageStats.find(l => l.language === 'NL')?.count || 0} NL
+                </span>
               </div>
+            </div>
+            <div className="bg-orange-500 bg-opacity-30 rounded-lg px-4 py-2 border border-orange-400">
+              <div className="text-white text-sm">Dutch Target</div>
+              <div className="text-white font-bold">40+ Videos Needed</div>
             </div>
           </div>
         </div>
@@ -324,31 +348,52 @@ const Dashboard = () => {
                   🇧🇪 Language Performance Split
                 </h2>
                 <div className="space-y-4">
-                  {data.languageStats.map((lang, idx) => (
-                    <div key={idx} className="bg-white bg-opacity-5 rounded-xl p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <div className="text-white font-bold text-lg">
-                          {lang.language === 'FR' ? '🇫🇷 French' : '🇳🇱 Dutch'}
+                  {data.languageStats.map((lang, idx) => {
+                    const isDutch = lang.language === 'NL';
+                    const isUnderperforming = isDutch && lang.count < 30;
+                    
+                    return (
+                      <div key={idx} className={`rounded-xl p-4 ${isUnderperforming ? 'bg-orange-500 bg-opacity-20 border-2 border-orange-400' : 'bg-white bg-opacity-5'}`}>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="text-white font-bold text-lg flex items-center gap-2">
+                            {lang.language === 'FR' ? '🇫🇷 French' : '🇳🇱 Dutch'}
+                            {isUnderperforming && <span className="text-orange-300 text-sm">⚠ CRITICAL GAP</span>}
+                          </div>
+                          <div className={`text-2xl font-black ${isUnderperforming ? 'text-orange-300' : 'text-white'}`}>
+                            {lang.count} videos
+                          </div>
                         </div>
-                        <div className="text-white text-2xl font-black">{lang.count} videos</div>
+                        <div className={`text-sm mb-2 opacity-75 ${isUnderperforming ? 'text-orange-200' : 'text-white'}`}>
+                          {lang.percentage}% of top 100
+                          {isUnderperforming && ' - Target: 40% (40 videos)'}
+                        </div>
+                        {isUnderperforming && (
+                          <div className="bg-orange-600 bg-opacity-30 rounded-lg p-2 mb-3">
+                            <div className="text-orange-100 text-xs font-bold">
+                              🎯 MISSING: {40 - lang.count} Dutch videos needed to reach 40% target
+                            </div>
+                            <div className="text-orange-200 text-xs">
+                              Flanders = 60% of Belgium population (6.6M people)
+                            </div>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className={`${isUnderperforming ? 'bg-orange-600' : 'bg-blue-500'} bg-opacity-20 rounded p-2 text-center`}>
+                            <div className={`${isUnderperforming ? 'text-orange-200' : 'text-blue-200'}`}>Avg Streams</div>
+                            <div className="text-white font-bold">{Math.round(lang.avgStreams)}</div>
+                          </div>
+                          <div className={`${isUnderperforming ? 'bg-orange-600' : 'bg-green-500'} bg-opacity-20 rounded p-2 text-center`}>
+                            <div className={`${isUnderperforming ? 'text-orange-200' : 'text-green-200'}`}>Completion</div>
+                            <div className="text-white font-bold">{lang.avgCompletion.toFixed(1)}%</div>
+                          </div>
+                          <div className={`${isUnderperforming ? 'bg-orange-600' : 'bg-yellow-500'} bg-opacity-20 rounded p-2 text-center`}>
+                            <div className={`${isUnderperforming ? 'text-orange-200' : 'text-yellow-200'}`}>View Time</div>
+                            <div className="text-white font-bold">{lang.avgViewTime.toFixed(1)}m</div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-white text-sm mb-2 opacity-75">{lang.percentage}% of top 100</div>
-                      <div className="grid grid-cols-3 gap-2 text-xs">
-                        <div className="bg-blue-500 bg-opacity-20 rounded p-2 text-center">
-                          <div className="text-blue-200">Avg Streams</div>
-                          <div className="text-white font-bold">{Math.round(lang.avgStreams)}</div>
-                        </div>
-                        <div className="bg-green-500 bg-opacity-20 rounded p-2 text-center">
-                          <div className="text-green-200">Completion</div>
-                          <div className="text-white font-bold">{lang.avgCompletion.toFixed(1)}%</div>
-                        </div>
-                        <div className="bg-yellow-500 bg-opacity-20 rounded p-2 text-center">
-                          <div className="text-yellow-200">View Time</div>
-                          <div className="text-white font-bold">{lang.avgViewTime.toFixed(1)}m</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -455,6 +500,60 @@ const Dashboard = () => {
 
         {activeTab === 'benchmarks' && (
           <div className="space-y-6">
+            {/* Dutch Content Crisis Alert */}
+            {(data.languageStats.find(l => l.language === 'NL')?.count || 0) < 30 && (
+              <div className="rounded-2xl bg-gradient-to-r from-orange-600 to-red-600 p-8 shadow-2xl border-2 border-orange-400">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="text-6xl">🚨</div>
+                  <div>
+                    <h2 className="text-4xl font-bold text-white mb-2">URGENT: Dutch Content Crisis</h2>
+                    <p className="text-xl text-white opacity-90">
+                      Only {data.languageStats.find(l => l.language === 'NL')?.count || 0} Dutch videos in top 100. 
+                      You're missing 60% of the Belgian market!
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+                  <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                    <h3 className="text-xl font-bold mb-3 text-orange-200">🇳🇱 Missed Opportunity</h3>
+                    <ul className="text-sm space-y-2">
+                      <li>• <strong>6.6M Flemish speakers</strong> (60% of Belgium)</li>
+                      <li>• <strong>Higher digital engagement</strong> than Wallonia</li>
+                      <li>• <strong>Club Brugge, Anderlecht</strong> massive fanbases</li>
+                      <li>• <strong>Voetbalnieuws dominance</strong> - capture market share</li>
+                    </ul>
+                  </div>
+                  <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                    <h3 className="text-xl font-bold mb-3 text-orange-200">📊 Target vs Reality</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span>Current Dutch:</span>
+                        <span className="font-bold text-orange-300">{data.languageStats.find(l => l.language === 'NL')?.count || 0} videos</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Target (40%):</span>
+                        <span className="font-bold text-green-300">40 videos</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>GAP:</span>
+                        <span className="font-bold text-red-300">{40 - (data.languageStats.find(l => l.language === 'NL')?.count || 0)} videos missing</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-white bg-opacity-20 rounded-xl p-6">
+                    <h3 className="text-xl font-bold mb-3 text-orange-200">🎯 Immediate Actions</h3>
+                    <ul className="text-sm space-y-2">
+                      <li>• <strong>Hire Dutch creators</strong> immediately</li>
+                      <li>• <strong>Focus on Club Brugge</strong> (top performing)</li>
+                      <li>• <strong>Dutch commentary</strong> for highlights</li>
+                      <li>• <strong>Partner with Flemish influencers</strong></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 p-8 shadow-2xl">
               <h2 className="text-4xl font-bold text-white mb-6">Belgian & European Video Benchmarks 2024</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -678,7 +777,18 @@ const Dashboard = () => {
                 {/* Content Calendar */}
                 <div className="bg-white bg-opacity-20 rounded-xl p-6">
                   <h4 className="text-xl font-bold text-white mb-4">📅 Content Strategy for Belgian Market</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-white">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-white">
+                    <div className="bg-orange-500 bg-opacity-30 rounded-xl p-4 border-2 border-orange-400">
+                      <h5 className="font-bold text-lg mb-3 text-orange-200">🚨 PRIORITY: Dutch Content</h5>
+                      <ul className="text-sm space-y-1">
+                        <li>• <strong>40 Dutch videos target</strong></li>
+                        <li>• <strong>Club Brugge highlights</strong> (weekly)</li>
+                        <li>• <strong>Anderlecht features</strong> (Brussels appeal)</li>
+                        <li>• <strong>Dutch commentary</strong> overlays</li>
+                        <li>• <strong>Flemish player interviews</strong></li>
+                        <li>• <strong>Pro League Dutch focus</strong></li>
+                      </ul>
+                    </div>
                     <div>
                       <h5 className="font-bold text-lg mb-3 text-blue-300">High-Performing Content</h5>
                       <ul className="text-sm space-y-1">
